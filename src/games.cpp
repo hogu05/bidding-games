@@ -2,14 +2,14 @@
 
 namespace games
 {
-Game make_tow(int n)
+Game make_tow(int n, bool p1_wins_ties)
 {
     int num_nodes = n + 2;
 
     Node p1_target = num_nodes - 1;
     Node p2_target = 0;
 
-    Game game(num_nodes, p1_target, p2_target);
+    Game game(num_nodes, p1_target, p2_target, p1_wins_ties);
 
     for (Node i = 1; i <= n; ++i)
     {
@@ -20,14 +20,14 @@ Game make_tow(int n)
     return game;
 }
 
-Game make_race(int a, int b)
+Game make_race(int a, int b, bool p1_wins_ties)
 {
     int num_nodes = (a * b) + 2;
 
     Node p1_target = a * b;
     Node p2_target = (a * b) + 1;
 
-    Game game(num_nodes, p1_target, p2_target);
+    Game game(num_nodes, p1_target, p2_target, p1_wins_ties);
 
     auto get_node = [&](int x, int y) -> Node
     {

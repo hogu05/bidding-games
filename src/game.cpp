@@ -1,7 +1,7 @@
 #include "game.hpp"
 
-Game::Game(int num_nodes, Node p1_target, Node p2_target)
-    : num_nodes(num_nodes), p1_target(p1_target), p2_target(p2_target)
+Game::Game(int num_nodes, Node p1_target, Node p2_target, bool p1_wins_ties)
+    : num_nodes(num_nodes), p1_target(p1_target), p2_target(p2_target), p1_wins_ties(p1_wins_ties)
 {
     adj_list.resize(num_nodes);
 }
@@ -29,4 +29,9 @@ Node Game::get_p2_target() const
 const std::vector<Node>& Game::get_neighbors(Node node) const
 {
     return adj_list[node];
+}
+
+bool Game::get_p1_wins_ties() const
+{
+    return p1_wins_ties;
 }

@@ -1,14 +1,16 @@
 #include "solver.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <vector>
 
 namespace solver
 {
 
-static Coins compute_node_threshold(Node node, Coins p2_budget, const Game& game,
+static Coins compute_node_threshold(const Game& game, Node node, Coins p2_budget,
                                     const std::vector<std::vector<Coins>>& threshold)
 {
+    bool p1_wins_ties = game.get_p1_wins_ties();
     const std::vector<Node>& neighbors = game.get_neighbors(node);
     Coins min_threshold = INF_COINS;
 
@@ -44,9 +46,20 @@ static Coins compute_node_threshold(Node node, Coins p2_budget, const Game& game
         p2_win_threshold[p2_bid] = p2_win_threshold_max;
     }
 
-    for (Coins p1_bid = 0; p1_bid <= p2_budget; ++p1_bid)
+    for (Coins p1_bid = 0; p1_bid <= (p1_wins_ties ? p2_budget : p2_budget + 1); ++p1_bid)
     {
-        Coins max_threshold = std::max(p1_win_threshold[p1_bid], p2_win_threshold[p1_bid + 1]);
+        Coins max_threshold{};
+
+        if (p1_wins_ties)
+        {
+            max_threshold = std::max(p1_win_threshold[p1_bid], p2_win_threshold[p1_bid + 1]);
+        }
+        else
+        {
+            max_threshold = p1_bid == 0
+                                ? p2_win_threshold[p1_bid]
+                                : std::max(p1_win_threshold[p1_bid - 1], p2_win_threshold[p1_bid]);
+        }
 
         Coins total_threshold = (max_threshold == INF_COINS) ? INF_COINS : p1_bid + max_threshold;
         min_threshold = std::min(min_threshold, total_threshold);
@@ -76,7 +89,7 @@ Coins poorman_reachability(const Game& game, Node start_node, Coins start_p2_bud
                     continue;
                 }
 
-                Coins new_threshold = compute_node_threshold(node, p2_budget, game, threshold);
+                Coins new_threshold = compute_node_threshold(game, node, p2_budget, threshold);
 
                 threshold[node][p2_budget] = std::min(threshold[node][p2_budget], new_threshold);
             }
