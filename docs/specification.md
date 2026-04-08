@@ -88,6 +88,6 @@ Implementace C++ solveru pro výpočet výherních prahů pro diskrétní all-pa
 - **Vstup**: bidding game, vrchol, rozpočet Hráče 2
 - **Výstup**: výherní práh
 
-### Genrování her
+### Generování her
 
 Součástí programu bude generátor základních typů her (např. Race, Tug-of-War).
