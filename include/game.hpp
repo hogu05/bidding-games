@@ -6,15 +6,15 @@
 class Game
 {
   private:
-    int num_nodes;
+    std::vector<std::vector<Node>> adj_list;
     Node p1_target;
     Node p2_target;
-    std::vector<std::vector<Node>> adj_list;
     bool p1_wins_ties;
 
   public:
-    Game(int num_nodes, Node p1_target, Node p2_target, bool p1_wins_ties);
-    void add_edge(Node from, Node to);
+    Game(std::vector<std::vector<Node>> adj_list, Node p1_target, Node p2_target,
+         bool p1_wins_ties);
+    Game flipped() const;
 
     int get_num_nodes() const;
     Node get_p1_target() const;

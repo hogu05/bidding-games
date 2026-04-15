@@ -1,26 +1,26 @@
-#include <chrono>
 #include <iostream>
 
 #include "games.hpp"
 #include "solver.hpp"
-
 int main()
 {
-    Game race = games::make_race(3, 3);
-    Game tow = games::make_tow(3);
 
-    auto start_time = std::chrono::high_resolution_clock::now();
+    Game game = games::make_tow(2, true);
+    Coins b2 = 10;
+    Node start_node = 2;
 
-    Coins race_threshold = solver::poorman_reachability(race, 0, 100);
-    Coins tow_threshold = solver::poorman_reachability(tow, 3, 100);
+    std::vector<Coins> p1_threshold = solver::poorman_reachability(game, start_node, b2);
+    std::vector<Coins> p2_threshold = solver::poorman_reachability(game.flipped(), start_node, b2);
 
-    auto end_time = std::chrono::high_resolution_clock::now();
+    Coins p1_win_threshold = p1_threshold[b2];
 
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time);
+    auto it = std::ranges::upper_bound(p2_threshold, b2);
 
-    std::cout << "RACE: " << race_threshold << std::endl;
-    std::cout << "TOW: " << tow_threshold << std::endl;
-    std::cout << duration << std::endl;
+    Coins p1_lose_threshold = std::distance(p2_threshold.begin(), std::prev(it));
+
+    std::cout << "P2 Budget: " << b2 << std::endl;
+    std::cout << "P1 Winning Threshold: " << p1_win_threshold << std::endl;
+    std::cout << "P1 Losing Threshold: " << p1_lose_threshold << std::endl;
 
     return 0;
 }

@@ -9,15 +9,15 @@ Game make_tow(int n, bool p1_wins_ties)
     Node p1_target = num_nodes - 1;
     Node p2_target = 0;
 
-    Game game(num_nodes, p1_target, p2_target, p1_wins_ties);
+    std::vector<std::vector<Node>> adj_list(num_nodes);
 
     for (Node i = 1; i <= n; ++i)
     {
-        game.add_edge(i, i + 1);
-        game.add_edge(i, i - 1);
+        adj_list[i].push_back(i + 1);
+        adj_list[i].push_back(i - 1);
     }
 
-    return game;
+    return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
 }
 
 Game make_race(int a, int b, bool p1_wins_ties)
@@ -27,9 +27,9 @@ Game make_race(int a, int b, bool p1_wins_ties)
     Node p1_target = a * b;
     Node p2_target = (a * b) + 1;
 
-    Game game(num_nodes, p1_target, p2_target, p1_wins_ties);
+    std::vector<std::vector<Node>> adj_list(num_nodes);
 
-    auto get_node = [&](int x, int y) -> Node
+    auto get_node = [=](int x, int y) -> Node
     {
         if (x == a)
         {
@@ -49,12 +49,11 @@ Game make_race(int a, int b, bool p1_wins_ties)
         {
             Node node = get_node(x, y);
 
-            game.add_edge(node, get_node(x + 1, y));
-            game.add_edge(node, get_node(x, y + 1));
+            adj_list[node].push_back(get_node(x + 1, y));
+            adj_list[node].push_back(get_node(x, y + 1));
         }
     }
 
-    return game;
+    return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
 }
-
 } // namespace games

@@ -1,7 +1,6 @@
 #include "solver.hpp"
 
 #include <algorithm>
-#include <iostream>
 #include <vector>
 
 namespace solver
@@ -68,7 +67,7 @@ static Coins compute_node_threshold(const Game& game, Node node, Coins p2_budget
     return min_threshold;
 }
 
-Coins poorman_reachability(const Game& game, Node start_node, Coins start_p2_budget)
+std::vector<Coins> poorman_reachability(const Game& game, Node start_node, Coins start_p2_budget)
 {
     int num_nodes = game.get_num_nodes();
     Node p1_target = game.get_p1_target();
@@ -95,6 +94,6 @@ Coins poorman_reachability(const Game& game, Node start_node, Coins start_p2_bud
             }
         }
     }
-    return threshold[start_node][start_p2_budget];
+    return threshold[start_node];
 }
 } // end namespace solver
