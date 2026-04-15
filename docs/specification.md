@@ -15,7 +15,7 @@ V každém kole oba hráči současně podají nabídku a hráč s vyšší nab�
 
 V tomto projektu při stejných nabídkách hýbe žetonem Hráč 1.
 
-V rachability games Hráč 1 vyhrává právě tehdy když se žeton dostane do předem určeného cílového vrcholu.
+V reachability games Hráč 1 vyhrává právě tehdy když se žeton dostane do předem určeného cílového vrcholu.
 
 ### Varianty bidding games
 
@@ -49,15 +49,17 @@ Tento projekt se zaměřuje primárně na diskrétní all-pay bidding games.
 
 ## Cíle projektu
 
-### Hlavní cíl
+### Hlavní cíle
 
-Implementace C++ solveru pro výpočet výherních prahů pro diskrétní all-pay Poorman bidding games pomocí dynamického programování.
+- Implementace C++ solveru pro výpočet výherních prahů pro diskrétní all-pay Poorman bidding games pomocí dynamického programování
+- Výpočet pravděpodoností výsledku při optimálních strategiích obou hráčů v nerozhodnutých konfiguracích pomocí kombinace dynamického programování a lineárního programování
+- Generátor základních typů her (např. Race, Tug-of-War)
+- API solveru pro Python
+- Analýza dat v Pythonu
 
 ### Možná rozšíření
 
-- Výpočet pravděpodoností výsledku při optimálních strategiích obou hráčů v nerozhodnutých konfiguracích
 - Richman
-- Python API: pybind
 
 ## Technologie
 
@@ -87,7 +89,3 @@ Implementace C++ solveru pro výpočet výherních prahů pro diskrétní all-pa
 
 - **Vstup**: bidding game, vrchol, rozpočet Hráče 2
 - **Výstup**: výherní práh
-
-### Generování her
-
-Součástí programu bude generátor základních typů her (např. Race, Tug-of-War).
