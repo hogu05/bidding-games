@@ -16,6 +16,7 @@ class Game
          bool p1_wins_ties);
     Game flipped() const;
 
+    const std::vector<std::vector<Node>>& get_adj_list() const;
     int get_num_nodes() const;
     Node get_p1_target() const;
     Node get_p2_target() const;

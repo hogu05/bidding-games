@@ -5,9 +5,11 @@
 int main()
 {
 
-    Game game = games::make_tow(2, true);
+    Game game_1 = games::make_race(2, 1, true);
+    Game game_2 = games::make_race(1, 1, true);
+    Game game = games::make_game_sum({{game_1, 0}, {game_2, 0}}, true);
     Coins b2 = 10;
-    Node start_node = 2;
+    Node start_node = 0;
 
     std::vector<Coins> p1_threshold = solver::poorman_reachability(game, start_node, b2);
     std::vector<Coins> p2_threshold = solver::poorman_reachability(game.flipped(), start_node, b2);

@@ -1,17 +1,20 @@
 #include "game.hpp"
 
-Game::Game(std::vector<std::vector<Node>> edges, Node p1_target, Node p2_target, bool p1_wins_ties)
-    : adj_list(std::move(edges)), p1_target(p1_target), p2_target(p2_target),
+Game::Game(std::vector<std::vector<Node>> adj_list, Node p1_target, Node p2_target,
+           bool p1_wins_ties)
+    : adj_list(std::move(adj_list)), p1_target(p1_target), p2_target(p2_target),
       p1_wins_ties(p1_wins_ties)
 {
 }
 
 Game Game::flipped() const
 {
-    Game flipped_game = *this;
-    std::swap(flipped_game.p1_target, flipped_game.p2_target);
-    flipped_game.p1_wins_ties = !this->p1_wins_ties;
-    return flipped_game;
+    return {adj_list, p2_target, p1_target, !p1_wins_ties};
+}
+
+const std::vector<std::vector<Node>>& Game::get_adj_list() const
+{
+    return adj_list;
 }
 
 int Game::get_num_nodes() const

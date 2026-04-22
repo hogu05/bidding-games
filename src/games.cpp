@@ -7,17 +7,14 @@ namespace games
 {
 Game make_tow(int n, bool p1_wins_ties)
 {
-    int num_nodes = n + 2;
+    const Node p1_target = n + 1;
+    const Node p2_target = 0;
 
-    Node p1_target = num_nodes - 1;
-    Node p2_target = 0;
+    std::vector<std::vector<Node>> adj_list(n + 2);
 
-    std::vector<std::vector<Node>> adj_list(num_nodes);
-
-    for (Node i = 1; i <= n; ++i)
+    for (Node node = 1; node <= n; ++node)
     {
-        adj_list[i].push_back(i + 1);
-        adj_list[i].push_back(i - 1);
+        adj_list[node] = {node + 1, node - 1};
     }
 
     return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
@@ -25,12 +22,10 @@ Game make_tow(int n, bool p1_wins_ties)
 
 Game make_race(int a, int b, bool p1_wins_ties)
 {
-    int num_nodes = (a * b) + 2;
+    const Node p1_target = a * b;
+    const Node p2_target = (a * b) + 1;
 
-    Node p1_target = a * b;
-    Node p2_target = (a * b) + 1;
-
-    std::vector<std::vector<Node>> adj_list(num_nodes);
+    std::vector<std::vector<Node>> adj_list((a * b) + 2);
 
     auto get_node = [=](int x, int y) -> Node
     {
@@ -50,10 +45,7 @@ Game make_race(int a, int b, bool p1_wins_ties)
     {
         for (int y = 0; y < b; ++y)
         {
-            Node node = get_node(x, y);
-
-            adj_list[node].push_back(get_node(x + 1, y));
-            adj_list[node].push_back(get_node(x, y + 1));
+            adj_list[get_node(x, y)] = {get_node(x + 1, y), get_node(x, y + 1)};
         }
     }
 
@@ -62,16 +54,15 @@ Game make_race(int a, int b, bool p1_wins_ties)
 
 Game make_coins(const std::vector<int>& coins, bool p1_wins_ties)
 {
-    int num_coins = static_cast<int>(coins.size());
     const Node p1_target = 1;
     const Node p2_target = 2;
     std::vector<std::vector<Node>> adj_list(3);
 
     std::map<std::pair<int, int>, Node> state_to_node;
 
-    std::function<Node(int, int)> build_node = [&](int coin_index, int score_diff) -> Node
+    std::function<Node(int, int)> get_node = [&](int coin_index, int score_diff) -> Node
     {
-        if (coin_index == num_coins)
+        if (coin_index == static_cast<int>(coins.size()))
         {
             if (score_diff > 0)
             {
@@ -96,15 +87,64 @@ Game make_coins(const std::vector<int>& coins, bool p1_wins_ties)
         adj_list.emplace_back();
 
         int coin = coins[coin_index];
-        Node p1_wins_coin = build_node(coin_index + 1, score_diff + coin);
-        Node p2_wins_coin = build_node(coin_index + 1, score_diff - coin);
+        Node p1_wins_coin = get_node(coin_index + 1, score_diff + coin);
+        Node p2_wins_coin = get_node(coin_index + 1, score_diff - coin);
         adj_list[node] = {p1_wins_coin, p2_wins_coin};
 
         return node;
     };
 
-    adj_list[0] = {build_node(1, coins[0]), build_node(1, -coins[0])};
+    adj_list[0] = {get_node(1, coins[0]), get_node(1, -coins[0])};
 
     return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
 }
+
+Game make_game_sum(const std::vector<std::pair<Game, Node>>& games, bool p1_wins_ties)
+{
+    const Node p1_target = 1;
+    const Node p2_target = 2;
+    std::vector<std::vector<Node>> adj_list(3);
+
+    for (auto&& [subgame, subgame_start_node] : games)
+    {
+        const Node subgame_p1_target = subgame.get_p1_target();
+        const Node subgame_p2_target = subgame.get_p2_target();
+        const int subgame_num_nodes = subgame.get_num_nodes();
+
+        std::vector<Node> node_mapping(subgame_num_nodes);
+        node_mapping[subgame_p1_target] = p1_target;
+        node_mapping[subgame_p2_target] = p2_target;
+
+        for (Node node = 0; node < subgame_num_nodes; ++node)
+        {
+            if (node == subgame_p1_target || node == subgame_p2_target)
+            {
+                continue;
+            }
+
+            node_mapping[node] = static_cast<Node>(adj_list.size());
+            adj_list.emplace_back();
+        }
+
+        adj_list[0].push_back(node_mapping[subgame_start_node]);
+
+        for (Node node = 0; node < subgame_num_nodes; ++node)
+        {
+            if (node == subgame_p1_target || node == subgame_p2_target)
+            {
+                continue;
+            }
+
+            Node mapped_node = node_mapping[node];
+
+            for (Node neighbor : subgame.get_neighbors(node))
+            {
+                adj_list[mapped_node].push_back(node_mapping[neighbor]);
+            }
+        }
+    }
+
+    return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
+};
+
 } // namespace games
