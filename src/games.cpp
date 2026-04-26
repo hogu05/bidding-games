@@ -17,7 +17,10 @@ Game make_tow(int n, bool p1_wins_ties)
         adj_list[node] = {node + 1, node - 1};
     }
 
-    return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
+    return {.adj_list = std::move(adj_list),
+            .p1_target = p1_target,
+            .p2_target = p2_target,
+            .p1_wins_ties = p1_wins_ties};
 }
 
 Game make_race(int a, int b, bool p1_wins_ties)
@@ -49,7 +52,10 @@ Game make_race(int a, int b, bool p1_wins_ties)
         }
     }
 
-    return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
+    return {.adj_list = std::move(adj_list),
+            .p1_target = p1_target,
+            .p2_target = p2_target,
+            .p1_wins_ties = p1_wins_ties};
 }
 
 Game make_coins(const std::vector<int>& coins, bool p1_wins_ties)
@@ -96,7 +102,10 @@ Game make_coins(const std::vector<int>& coins, bool p1_wins_ties)
 
     adj_list[0] = {get_node(1, coins[0]), get_node(1, -coins[0])};
 
-    return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
+    return {.adj_list = std::move(adj_list),
+            .p1_target = p1_target,
+            .p2_target = p2_target,
+            .p1_wins_ties = p1_wins_ties};
 }
 
 Game make_game_sum(const std::vector<std::pair<Game, Node>>& games, bool p1_wins_ties)
@@ -107,17 +116,15 @@ Game make_game_sum(const std::vector<std::pair<Game, Node>>& games, bool p1_wins
 
     for (auto&& [subgame, subgame_start_node] : games)
     {
-        const Node subgame_p1_target = subgame.get_p1_target();
-        const Node subgame_p2_target = subgame.get_p2_target();
-        const int subgame_num_nodes = subgame.get_num_nodes();
+        const int subgame_num_nodes = static_cast<int>(subgame.adj_list.size());
 
         std::vector<Node> node_mapping(subgame_num_nodes);
-        node_mapping[subgame_p1_target] = p1_target;
-        node_mapping[subgame_p2_target] = p2_target;
+        node_mapping[subgame.p1_target] = p1_target;
+        node_mapping[subgame.p2_target] = p2_target;
 
         for (Node node = 0; node < subgame_num_nodes; ++node)
         {
-            if (node == subgame_p1_target || node == subgame_p2_target)
+            if (node == subgame.p1_target || node == subgame.p2_target)
             {
                 continue;
             }
@@ -130,21 +137,24 @@ Game make_game_sum(const std::vector<std::pair<Game, Node>>& games, bool p1_wins
 
         for (Node node = 0; node < subgame_num_nodes; ++node)
         {
-            if (node == subgame_p1_target || node == subgame_p2_target)
+            if (node == subgame.p1_target || node == subgame.p2_target)
             {
                 continue;
             }
 
             Node mapped_node = node_mapping[node];
 
-            for (Node neighbor : subgame.get_neighbors(node))
+            for (Node neighbor : subgame.adj_list[node])
             {
                 adj_list[mapped_node].push_back(node_mapping[neighbor]);
             }
         }
     }
 
-    return {std::move(adj_list), p1_target, p2_target, p1_wins_ties};
+    return {.adj_list = std::move(adj_list),
+            .p1_target = p1_target,
+            .p2_target = p2_target,
+            .p1_wins_ties = p1_wins_ties};
 };
 
 } // namespace games

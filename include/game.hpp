@@ -3,23 +3,18 @@
 
 #include "types.hpp"
 
-class Game
+struct Game
 {
-  private:
     std::vector<std::vector<Node>> adj_list;
-    Node p1_target;
-    Node p2_target;
-    bool p1_wins_ties;
+    Node p1_target{};
+    Node p2_target{};
+    bool p1_wins_ties{};
 
-  public:
-    Game(std::vector<std::vector<Node>> adj_list, Node p1_target, Node p2_target,
-         bool p1_wins_ties);
-    Game flipped() const;
-
-    const std::vector<std::vector<Node>>& get_adj_list() const;
-    int get_num_nodes() const;
-    Node get_p1_target() const;
-    Node get_p2_target() const;
-    const std::vector<Node>& get_neighbors(Node node) const;
-    bool get_p1_wins_ties() const;
+    Game flipped() const
+    {
+        return {.adj_list = adj_list,
+                .p1_target = p2_target,
+                .p2_target = p1_target,
+                .p1_wins_ties = !p1_wins_ties};
+    }
 };
