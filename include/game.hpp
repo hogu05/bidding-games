@@ -18,3 +18,9 @@ struct Game
                 .p1_wins_ties = !p1_wins_ties};
     }
 };
+
+struct RootedGame
+{
+    Game game;
+    Node start_node{};
+};

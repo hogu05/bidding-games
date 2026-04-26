@@ -7,7 +7,8 @@ int main()
 
     Game game_1 = games::make_race(2, 1, true);
     Game game_2 = games::make_race(1, 1, true);
-    Game game = games::make_game_sum({{game_1, 0}, {game_2, 0}}, true);
+    Game game = games::make_game_sum(
+        {{.game = game_1, .start_node = 0}, {.game = game_2, .start_node = 0}}, true);
     Coins b2 = 10;
     Node start_node = 0;
 

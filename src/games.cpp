@@ -108,14 +108,15 @@ Game make_coins(const std::vector<int>& coins, bool p1_wins_ties)
             .p1_wins_ties = p1_wins_ties};
 }
 
-Game make_game_sum(const std::vector<std::pair<Game, Node>>& games, bool p1_wins_ties)
+Game make_game_sum(const std::vector<RootedGame>& rooted_games, bool p1_wins_ties)
 {
     const Node p1_target = 1;
     const Node p2_target = 2;
     std::vector<std::vector<Node>> adj_list(3);
 
-    for (auto&& [subgame, subgame_start_node] : games)
+    for (auto&& rooted_game : rooted_games)
     {
+        const Game& subgame = rooted_game.game;
         const int subgame_num_nodes = static_cast<int>(subgame.adj_list.size());
 
         std::vector<Node> node_mapping(subgame_num_nodes);
@@ -133,7 +134,7 @@ Game make_game_sum(const std::vector<std::pair<Game, Node>>& games, bool p1_wins
             adj_list.emplace_back();
         }
 
-        adj_list[0].push_back(node_mapping[subgame_start_node]);
+        adj_list[0].push_back(node_mapping[rooted_game.start_node]);
 
         for (Node node = 0; node < subgame_num_nodes; ++node)
         {
