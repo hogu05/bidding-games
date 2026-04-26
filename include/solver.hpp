@@ -4,5 +4,5 @@
 
 namespace solver
 {
-std::vector<Coins> poorman_reachability(const Game& game, Node start_node, Coins start_p2_budget);
+std::vector<std::vector<Coins>> poorman_reachability(const Game& game, Coins max_p2_budget);
 } // namespace solver

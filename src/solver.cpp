@@ -28,7 +28,6 @@ static Coins compute_node_threshold(const Game& game, Node node, Coins p2_budget
 
     std::vector<Coins> p2_win_threshold(p2_budget + 2, 0);
     Coins p2_win_threshold_max = 0;
-
     for (int p2_bid = p2_budget; p2_bid >= 0; --p2_bid)
     {
         Coins p2_bid_threshold = 0;
@@ -64,15 +63,15 @@ static Coins compute_node_threshold(const Game& game, Node node, Coins p2_budget
     return min_threshold;
 }
 
-std::vector<Coins> poorman_reachability(const Game& game, Node start_node, Coins start_p2_budget)
+std::vector<std::vector<Coins>> poorman_reachability(const Game& game, Coins max_p2_budget)
 {
     int num_nodes = static_cast<int>(game.adj_list.size());
     Node p1_target = game.p1_target;
     Node p2_target = game.p2_target;
 
     std::vector<std::vector<Coins>> threshold(num_nodes,
-                                              std::vector<Coins>(start_p2_budget + 1, INF_COINS));
-    for (Coins p2_budget = 0; p2_budget <= start_p2_budget; ++p2_budget)
+                                              std::vector<Coins>(max_p2_budget + 1, INF_COINS));
+    for (Coins p2_budget = 0; p2_budget <= max_p2_budget; ++p2_budget)
     {
         threshold[p1_target][p2_budget] = 0;
         threshold[p2_target][p2_budget] = INF_COINS;
@@ -91,6 +90,6 @@ std::vector<Coins> poorman_reachability(const Game& game, Node start_node, Coins
             }
         }
     }
-    return threshold[start_node];
+    return threshold;
 }
 } // end namespace solver

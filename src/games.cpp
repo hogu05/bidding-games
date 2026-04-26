@@ -156,6 +156,6 @@ Game make_game_sum(const std::vector<RootedGame>& rooted_games, bool p1_wins_tie
             .p1_target = p1_target,
             .p2_target = p2_target,
             .p1_wins_ties = p1_wins_ties};
-};
+}
 
 } // namespace games
