@@ -9,7 +9,7 @@ namespace poorman
 static Coins compute_configuration_threshold(const Game& game, Node node, Coins p2_budget,
                                              const std::vector<std::vector<Coins>>& thresholds)
 {
-    Coins max_p1_bid = game.p1_wins_ties ? p2_budget : p2_budget + 1;
+    Coins max_p1_bid = game.tiebreaker == Player::P1 ? p2_budget : p2_budget + 1;
 
     Coins p1_win_branch_threshold = INF_COINS;
     for (Node neighbor : game.adj_list[node])
@@ -20,7 +20,7 @@ static Coins compute_configuration_threshold(const Game& game, Node node, Coins 
 
     auto calculate_bid_threshold = [&](Coins p1_bid) -> std::pair<Coins, bool>
     {
-        Coins p2_win_bid = game.p1_wins_ties ? p1_bid + 1 : p1_bid;
+        Coins p2_win_bid = game.tiebreaker == Player::P1 ? p1_bid + 1 : p1_bid;
         Coins p1_win_threshold =
             (p1_win_branch_threshold == INF_COINS) ? INF_COINS : p1_bid + p1_win_branch_threshold;
 
@@ -275,6 +275,13 @@ std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, C
         }
     }
     return values;
+}
+
+std::vector<double> get_strategy(const Game& game, Node node, Coins p1_budget, Coins p2_budget,
+                                 const std::vector<std::vector<std::vector<double>>>& values)
+{
+
+    return {};
 }
 
 } // namespace poorman

@@ -21,7 +21,6 @@ FetchContent_MakeAvailable(highs)
 
 add_library(allpay_lib
     src/poorman.cpp
-    src/games.cpp
 )
 target_include_directories(allpay_lib PUBLIC include)
 target_link_libraries(allpay_lib PRIVATE highs::highs)
