@@ -3,7 +3,7 @@
 
 #include "game.hpp"
 #include "games.hpp"
-#include "solver.hpp"
+#include "poorman.hpp"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -22,5 +22,7 @@ NB_MODULE(allpay, m)
     m.def("make_coins", &games::make_coins, "coins"_a, "p1_wins_ties"_a = true);
     m.def("make_game_sum", &games::make_game_sum, "rooted_games"_a, "p1_wins_ties"_a = true);
 
-    m.def("poorman_reachability", &solver::poorman_reachability, "game"_a, "p2_budget"_a);
+    m.def("compute_poorman_thresholds", &poorman::compute_thresholds, "game"_a, "max_p2_budget"_a);
+    m.def("compute_poorman_values", &poorman::compute_values, "game"_a, "max_p1_budget"_a,
+          "max_p2_budget"_a);
 }

@@ -1,30 +1,36 @@
+#include <chrono>
 #include <iostream>
 
 #include "games.hpp"
-#include "solver.hpp"
+#include "poorman.hpp"
+
 int main()
 {
+    Game game1 = games::make_tow(18, true);
+    Game game2 = games::make_coins({1, 2, 3, 4, 5}, true);
+    Game game3 = games::make_race(10, 10, true);
+    Game game4 = games::make_game_sum(
+        {RootedGame(game1, 2), RootedGame(game2, 0), RootedGame(game3, 0)}, true);
 
-    Game game_1 = games::make_race(2, 1, true);
-    Game game_2 = games::make_race(1, 1, true);
-    Game game = games::make_game_sum(
-        {{.game = game_1, .start_node = 0}, {.game = game_2, .start_node = 0}}, true);
-    Coins max_p2_budget = 10;
-    Node start_node = 0;
+    auto start = std::chrono::high_resolution_clock::now();
+    std::vector<std::vector<Coins>> winning_thresholds1 = poorman::compute_thresholds(game1, 1000);
+    std::vector<std::vector<Coins>> winning_thresholds2 = poorman::compute_thresholds(game2, 1000);
+    std::vector<std::vector<Coins>> winning_thresholds3 = poorman::compute_thresholds(game3, 1000);
+    std::vector<std::vector<Coins>> winning_thresholds4 = poorman::compute_thresholds(game4, 1000);
 
-    std::vector<Coins> p1_threshold = solver::poorman_reachability(game, max_p2_budget)[start_node];
-    std::vector<Coins> p2_threshold =
-        solver::poorman_reachability(game.flipped(), max_p2_budget)[start_node];
+    auto end = std::chrono::high_resolution_clock::now();
 
-    Coins p1_win_threshold = p1_threshold[max_p2_budget];
+    std::chrono::duration<double, std::milli> elapsed = end - start;
+    std::cout << elapsed.count() << std::endl;
+    std::cout << winning_thresholds1[2][1000] << std::endl;
+    std::cout << winning_thresholds2[0][1000] << std::endl;
+    std::cout << winning_thresholds3[0][1000] << std::endl;
+    std::cout << winning_thresholds4[0][1000] << std::endl;
 
-    auto it = std::ranges::upper_bound(p2_threshold, max_p2_budget);
+    Game game5 = games::make_tow(2, true);
+    std::vector<std::vector<std::vector<double>>> dp = poorman::compute_values(game5, 10, 10);
 
-    Coins p1_lose_threshold = std::distance(p2_threshold.begin(), std::prev(it));
-
-    std::cout << "P2 Budget: " << max_p2_budget << std::endl;
-    std::cout << "P1 Winning Threshold: " << p1_win_threshold << std::endl;
-    std::cout << "P1 Losing Threshold: " << p1_lose_threshold << std::endl;
+    std::cout << dp[1][10][10] << std::endl;
 
     return 0;
 }

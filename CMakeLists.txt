@@ -5,18 +5,31 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+include(FetchContent)
+FetchContent_Declare(
+    highs
+    GIT_REPOSITORY https://github.com/ERGO-Code/HiGHS.git
+    GIT_TAG v1.14.0
+)
+
+set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+
+FetchContent_MakeAvailable(highs)
 
 add_library(allpay_lib
-    src/solver.cpp
+    src/poorman.cpp
     src/games.cpp
 )
 target_include_directories(allpay_lib PUBLIC include)
-set_target_properties(allpay_lib PROPERTIES POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(allpay_lib PRIVATE highs::highs)
 
 add_executable(allpay_solver src/main.cpp)
 target_link_libraries(allpay_solver PRIVATE allpay_lib)
 
-find_package(Python 3.8 REQUIRED COMPONENTS Interpreter Development.Module)
+find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development.Module)
 
 execute_process(
     COMMAND "${Python_EXECUTABLE}" -m nanobind --cmake_dir
