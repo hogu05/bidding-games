@@ -212,6 +212,31 @@ std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, C
         }
     }
 
+    auto winning_thresholds = compute_thresholds(game, max_p2_budget);
+    auto losing_thresholds = compute_thresholds(game.flipped(), max_p1_budget);
+
+    for (Node node = 0; node < num_nodes; ++node)
+    {
+        if (node == p1_target || node == p2_target)
+        {
+            continue;
+        }
+        for (Coins p1_budget = 0; p1_budget <= max_p1_budget; ++p1_budget)
+        {
+            for (Coins p2_budget = 0; p2_budget <= max_p2_budget; ++p2_budget)
+            {
+                if (p1_budget >= winning_thresholds[node][p2_budget])
+                {
+                    values[node][p1_budget][p2_budget] = 1.0;
+                }
+                else if (p2_budget >= losing_thresholds[node][p1_budget])
+                {
+                    values[node][p1_budget][p2_budget] = 0.0;
+                }
+            }
+        }
+    }
+
     const double EPSILON = 1e-6;
 
     for (Coins p1_budget = 0; p1_budget <= max_p1_budget; ++p1_budget)
@@ -225,6 +250,12 @@ std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, C
                 for (Node node = 0; node < num_nodes; ++node)
                 {
                     if (node == p1_target || node == p2_target)
+                    {
+                        continue;
+                    }
+
+                    if (p1_budget >= winning_thresholds[node][p2_budget] ||
+                        p2_budget >= losing_thresholds[node][p1_budget])
                     {
                         continue;
                     }
