@@ -2,6 +2,8 @@
 
 #include <Highs.h>
 #include <algorithm>
+#include <memory>
+#include <numeric>
 #include <vector>
 
 namespace poorman
@@ -105,60 +107,95 @@ std::vector<std::vector<Coins>> compute_thresholds(const Game& game, Coins max_p
     return thresholds;
 }
 
-static double compute_matrix_value(const std::vector<std::vector<double>>& payoff_matrix)
+static std::unique_ptr<Highs> build_lp(const std::vector<std::vector<double>>& payoff_matrix,
+                                       Player player)
 {
     auto max_p1_bid = static_cast<Coins>(payoff_matrix.size());
     auto max_p2_bid = static_cast<Coins>(payoff_matrix[0].size());
 
-    Highs highs;
-    highs.setOptionValue("output_flag", false);
+    auto highs = std::make_unique<Highs>();
+    highs->setOptionValue("output_flag", false);
 
-    highs.changeObjectiveSense(ObjSense::kMaximize);
-
-    for (Coins _ = 0; _ < max_p1_bid; ++_)
+    if (player == Player::P1)
     {
-        highs.addVar(0.0, 1.0);
+        highs->changeObjectiveSense(ObjSense::kMaximize);
+
+        for (Coins _ = 0; _ < max_p1_bid; ++_)
+        {
+            highs->addVar(0.0, 1.0);
+        }
+        highs->addVar(0.0, 1.0);
+        highs->changeColCost(max_p1_bid, 1.0);
+
+        std::vector<int> sum_indices(max_p1_bid);
+        std::iota(sum_indices.begin(), sum_indices.end(), 0);
+        std::vector<double> sum_values(max_p1_bid, 1.0);
+        highs->addRow(1.0, 1.0, max_p1_bid, sum_indices.data(), sum_values.data());
+
+        for (Coins p2_bid = 0; p2_bid < max_p2_bid; ++p2_bid)
+        {
+            std::vector<int> value_indices;
+            std::vector<double> value_values;
+            for (Coins p1_bid = 0; p1_bid < max_p1_bid; ++p1_bid)
+            {
+                value_indices.push_back(p1_bid);
+                value_values.push_back(payoff_matrix[p1_bid][p2_bid]);
+            }
+            value_indices.push_back(max_p1_bid);
+            value_values.push_back(-1.0);
+            highs->addRow(0.0, kHighsInf, max_p1_bid + 1, value_indices.data(),
+                          value_values.data());
+        }
     }
-
-    highs.addVar(0.0, 1.0);
-    int value_index = max_p1_bid;
-
-    highs.changeColCost(value_index, 1.0);
-
-    std::vector<int> sum_indices(max_p1_bid);
-    std::iota(sum_indices.begin(), sum_indices.end(), 0);
-    std::vector<double> sum_values(max_p1_bid, 1.0);
-    highs.addRow(1.0, 1.0, max_p1_bid, sum_indices.data(), sum_values.data());
-
-    for (Coins p2_bid = 0; p2_bid < max_p2_bid; ++p2_bid)
+    else
     {
-        std::vector<int> value_indices;
-        std::vector<double> value_values;
+        highs->changeObjectiveSense(ObjSense::kMinimize);
+
+        for (Coins _ = 0; _ < max_p2_bid; ++_)
+        {
+            highs->addVar(0.0, 1.0);
+        }
+        highs->addVar(0.0, 1.0);
+        highs->changeColCost(max_p2_bid, 1.0);
+
+        std::vector<int> sum_indices(max_p2_bid);
+        std::iota(sum_indices.begin(), sum_indices.end(), 0);
+        std::vector<double> sum_values(max_p2_bid, 1.0);
+        highs->addRow(1.0, 1.0, max_p2_bid, sum_indices.data(), sum_values.data());
 
         for (Coins p1_bid = 0; p1_bid < max_p1_bid; ++p1_bid)
         {
-            value_indices.push_back(p1_bid);
-            value_values.push_back(payoff_matrix[p1_bid][p2_bid]);
+            std::vector<int> value_indices;
+            std::vector<double> value_values;
+            for (Coins p2_bid = 0; p2_bid < max_p2_bid; ++p2_bid)
+            {
+                value_indices.push_back(p2_bid);
+                value_values.push_back(payoff_matrix[p1_bid][p2_bid]);
+            }
+            value_indices.push_back(max_p2_bid);
+            value_values.push_back(-1.0);
+            highs->addRow(-kHighsInf, 0.0, max_p2_bid + 1, value_indices.data(),
+                          value_values.data());
         }
-
-        value_indices.push_back(value_index);
-        value_values.push_back(-1.0);
-
-        highs.addRow(0.0, kHighsInf, max_p1_bid + 1, value_indices.data(), value_values.data());
     }
 
-    highs.run();
-    const HighsSolution& solution = highs.getSolution();
-    return solution.col_value[value_index] + 0.0;
+    return highs;
 }
 
-static double
-compute_configuration_value(const Game& game, Node node, Coins p1_budget, Coins p2_budget,
-                            const std::vector<std::vector<std::vector<double>>>& values)
+static double compute_matrix_value(const std::vector<std::vector<double>>& payoff_matrix)
+{
+    auto highs = build_lp(payoff_matrix, Player::P1);
+    highs->run();
+    int value_index = static_cast<Coins>(payoff_matrix.size());
+    return highs->getSolution().col_value[value_index] + 0.0;
+}
+
+static std::vector<std::vector<double>>
+build_payoff_matrix(const Game& game, Node node, Coins p1_budget, Coins p2_budget,
+                    const std::vector<std::vector<std::vector<double>>>& values)
 {
     std::vector<std::vector<double>> payoff_matrix(p1_budget + 1,
                                                    std::vector<double>(p2_budget + 1, 0.0));
-
     for (Coins p1_bid = 0; p1_bid <= p1_budget; ++p1_bid)
     {
         for (Coins p2_bid = 0; p2_bid <= p2_budget; ++p2_bid)
@@ -188,8 +225,7 @@ compute_configuration_value(const Game& game, Node node, Coins p1_budget, Coins 
             }
         }
     }
-
-    return compute_matrix_value(payoff_matrix);
+    return payoff_matrix;
 }
 
 std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, Coins max_p1_budget,
@@ -260,8 +296,8 @@ std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, C
                         continue;
                     }
 
-                    double new_value =
-                        compute_configuration_value(game, node, p1_budget, p2_budget, values);
+                    double new_value = compute_matrix_value(
+                        build_payoff_matrix(game, node, p1_budget, p2_budget, values));
                     max_diff = std::max(max_diff,
                                         std::abs(new_value - values[node][p1_budget][p2_budget]));
                     values[node][p1_budget][p2_budget] = new_value;
@@ -278,10 +314,15 @@ std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, C
 }
 
 std::vector<double> get_strategy(const Game& game, Node node, Coins p1_budget, Coins p2_budget,
-                                 const std::vector<std::vector<std::vector<double>>>& values)
+                                 const std::vector<std::vector<std::vector<double>>>& values,
+                                 Player player)
 {
-
-    return {};
+    auto payoff_matrix = build_payoff_matrix(game, node, p1_budget, p2_budget, values);
+    auto highs = build_lp(payoff_matrix, player);
+    highs->run();
+    const auto& col_values = highs->getSolution().col_value;
+    Coins num_bids = (player == Player::P1) ? p1_budget + 1 : p2_budget + 1;
+    return {col_values.begin(), col_values.begin() + num_bids};
 }
 
 } // namespace poorman

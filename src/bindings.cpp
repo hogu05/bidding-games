@@ -27,4 +27,6 @@ NB_MODULE(allpay, m)
     m.def("compute_poorman_thresholds", &poorman::compute_thresholds, "game"_a, "max_p2_budget"_a);
     m.def("compute_poorman_values", &poorman::compute_values, "game"_a, "max_p1_budget"_a,
           "max_p2_budget"_a);
+    m.def("get_poorman_strategy", &poorman::get_strategy, "game"_a, "node"_a, "p1_budget"_a,
+          "p2_budget"_a, "values"_a, "player"_a);
 }
