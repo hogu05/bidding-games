@@ -3,6 +3,7 @@
 
 #include "game.hpp"
 #include "poorman.hpp"
+#include "richman.hpp"
 
 namespace nb = nanobind;
 using namespace nb::literals;
@@ -17,6 +18,7 @@ NB_MODULE(allpay, m)
         .def_ro("adj_list", &Game::adj_list)
         .def_ro("p1_target", &Game::p1_target)
         .def_ro("p2_target", &Game::p2_target)
+        .def_ro("tiebreaker", &Game::tiebreaker)
         .def("flipped", &Game::flipped);
 
     nb::class_<RootedGame>(m, "RootedGame")
@@ -29,4 +31,9 @@ NB_MODULE(allpay, m)
           "max_p2_budget"_a);
     m.def("get_poorman_strategy", &poorman::get_strategy, "game"_a, "node"_a, "p1_budget"_a,
           "p2_budget"_a, "values"_a, "player"_a);
+
+    m.def("compute_richman_thresholds", &richman::compute_thresholds, "game"_a, "total_budget"_a);
+    m.def("compute_richman_values", &richman::compute_values, "game"_a, "total_budget"_a);
+    m.def("get_richman_strategy", &richman::get_strategy, "game"_a, "node"_a, "p1_budget"_a,
+          "values"_a, "player"_a);
 }
