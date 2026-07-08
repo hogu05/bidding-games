@@ -33,6 +33,8 @@ NB_MODULE(allpay, m)
           "p2_budget"_a, "values"_a, "player"_a);
 
     m.def("compute_richman_thresholds", &richman::compute_thresholds, "game"_a, "total_budget"_a);
+    m.def("compute_richman_threshold", &richman::compute_threshold, "game"_a, "node"_a,
+          "p2_budget"_a);
     m.def("compute_richman_values", &richman::compute_values, "game"_a, "total_budget"_a);
     m.def("get_richman_strategy", &richman::get_strategy, "game"_a, "node"_a, "p1_budget"_a,
           "values"_a, "player"_a);

@@ -63,6 +63,44 @@ std::vector<Coins> compute_thresholds(const Game& game, Coins total_budget)
     return thresholds;
 }
 
+Coins compute_threshold(const Game& game, Node node, Coins p2_budget)
+{
+    if (node == game.p1_target)
+    {
+        return 0;
+    }
+    if (node == game.p2_target)
+    {
+        return INF_COINS;
+    }
+
+    Coins low = 0;
+    Coins high = 1;
+    while (high < compute_thresholds(game, high + p2_budget)[node])
+    {
+        high *= 2;
+    }
+
+    Coins threshold = INF_COINS;
+    while (low <= high)
+    {
+        Coins mid = low + ((high - low) / 2);
+        bool p1_wins = mid >= compute_thresholds(game, mid + p2_budget)[node];
+
+        if (p1_wins)
+        {
+            threshold = std::min(threshold, mid);
+            high = mid - 1;
+        }
+        else
+        {
+            low = mid + 1;
+        }
+    }
+
+    return threshold;
+}
+
 static std::vector<std::vector<double>>
 build_payoff_matrix(const Game& game, Node node, Coins p1_budget,
                     const std::vector<std::vector<double>>& values)
@@ -111,10 +149,32 @@ std::vector<std::vector<double>> compute_values(const Game& game, Coins total_bu
     constexpr double INITIAL_VALUE = 0.5;
     std::vector<std::vector<double>> values(num_nodes,
                                             std::vector<double>(total_budget + 1, INITIAL_VALUE));
-    for (Coins b1 = 0; b1 <= total_budget; ++b1)
+    for (Coins p1_budget = 0; p1_budget <= total_budget; ++p1_budget)
     {
-        values[p1_target][b1] = 1.0;
-        values[p2_target][b1] = 0.0;
+        values[p1_target][p1_budget] = 1.0;
+        values[p2_target][p1_budget] = 0.0;
+    }
+
+    auto winning_thresholds = compute_thresholds(game, total_budget);
+    auto losing_thresholds = compute_thresholds(game.flipped(), total_budget);
+
+    for (Node node = 0; node < num_nodes; ++node)
+    {
+        if (node == p1_target || node == p2_target)
+        {
+            continue;
+        }
+        for (Coins p1_budget = 0; p1_budget <= total_budget; ++p1_budget)
+        {
+            if (p1_budget >= winning_thresholds[node])
+            {
+                values[node][p1_budget] = 1.0;
+            }
+            else if (total_budget - p1_budget >= losing_thresholds[node])
+            {
+                values[node][p1_budget] = 0.0;
+            }
+        }
     }
 
     const double EPSILON = 1e-6;
@@ -130,12 +190,17 @@ std::vector<std::vector<double>> compute_values(const Game& game, Coins total_bu
                 continue;
             }
 
-            for (Coins b1 = 0; b1 <= total_budget; ++b1)
+            for (Coins p1_budget = 0; p1_budget <= total_budget; ++p1_budget)
             {
+                if (p1_budget >= winning_thresholds[node] ||
+                    total_budget - p1_budget >= losing_thresholds[node])
+                {
+                    continue;
+                }
                 double new_value =
-                    lp::compute_matrix_value(build_payoff_matrix(game, node, b1, values));
-                max_diff = std::max(max_diff, std::abs(new_value - values[node][b1]));
-                values[node][b1] = new_value;
+                    lp::compute_matrix_value(build_payoff_matrix(game, node, p1_budget, values));
+                max_diff = std::max(max_diff, std::abs(new_value - values[node][p1_budget]));
+                values[node][p1_budget] = new_value;
             }
         }
 
