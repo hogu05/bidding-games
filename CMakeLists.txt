@@ -20,13 +20,12 @@ set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(highs)
 
 add_library(allpay_lib
+    src/lp.cpp
     src/poorman.cpp
+    src/richman.cpp
 )
 target_include_directories(allpay_lib PUBLIC include)
 target_link_libraries(allpay_lib PRIVATE highs::highs)
-
-add_executable(allpay_solver src/main.cpp)
-target_link_libraries(allpay_solver PRIVATE allpay_lib)
 
 find_package(Python 3.9 REQUIRED COMPONENTS Interpreter Development.Module)
 
@@ -39,3 +38,4 @@ nanobind_add_module(allpay src/bindings.cpp)
 
 target_link_libraries(allpay PRIVATE allpay_lib)
 install(TARGETS allpay LIBRARY DESTINATION .)
+install(FILES python/games.py DESTINATION .)

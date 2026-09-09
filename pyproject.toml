@@ -5,3 +5,13 @@
 [project]
     name = "allpay"
     version = "0.1.0"
+
+[dependency-groups]
+    tests = ["pytest"]
+    app = ["dash", "dash-cytoscape"]
+    analysis = ["numpy", "matplotlib", "seaborn"]
+    all = [
+        { include-group = "tests" },
+        { include-group = "app" },
+        { include-group = "analysis" },
+    ]
