@@ -26,7 +26,7 @@ Concrete bidding mechanisms vary in three independent properties:
 This project implements a solver for discrete all-pay bidding games, in both poorman and Richman variants.
 The solver computes:
 
-- **Threshold** - the minimum budget P1 needs to guarantee a win given P2 budget
+- **Threshold** - the minimum budget P1 needs for a pure strategy that guarantees a win, given P2 budget
 - **Game value** - the win probability under optimal play given P1 and P2 budgets
 - **Strategy** - the optimal mixed bidding strategy given P1 and P2 budgets
 
