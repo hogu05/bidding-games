@@ -1,61 +1,51 @@
 #include "poorman.hpp"
 
 #include <algorithm>
+#include <queue>
+#include <utility>
 #include <vector>
 
 #include "lp.hpp"
 
 namespace poorman
 {
-static Coins compute_configuration_threshold(const Game& game, Node node, Coins p2_budget,
-                                             const std::vector<std::vector<Coins>>& thresholds)
-{
-    Coins max_p1_bid = game.tiebreaker == Player::P1 ? p2_budget : p2_budget + 1;
 
-    Coins p1_win_branch_threshold = INF_COINS;
-    for (Node neighbor : game.adj_list[node])
+static std::pair<Coins, bool> try_bid(const Game& game, Node node, Coins p2_budget, Coins p1_bid,
+                                      Coins win_threshold,
+                                      const std::vector<std::vector<Coins>>& thresholds)
+{
+    Coins p2_win_bid = game.tiebreaker == Player::P1 ? p1_bid + 1 : p1_bid;
+    Coins win_bid_threshold = (win_threshold == INF_COINS) ? INF_COINS : p1_bid + win_threshold;
+
+    if (p2_win_bid > p2_budget)
     {
-        p1_win_branch_threshold =
-            std::min(p1_win_branch_threshold, thresholds[neighbor][p2_budget]);
+        return {win_bid_threshold, true};
     }
 
-    auto calculate_bid_threshold = [&](Coins p1_bid) -> std::pair<Coins, bool>
+    Coins lose_threshold = 0;
+    for (Node neighbor : game.adj_list[node])
     {
-        Coins p2_win_bid = game.tiebreaker == Player::P1 ? p1_bid + 1 : p1_bid;
-        Coins p1_win_threshold =
-            (p1_win_branch_threshold == INF_COINS) ? INF_COINS : p1_bid + p1_win_branch_threshold;
+        lose_threshold = std::max(lose_threshold, thresholds[neighbor][p2_budget - p2_win_bid]);
+    }
+    Coins lose_bid_threshold = (lose_threshold == INF_COINS) ? INF_COINS : p1_bid + lose_threshold;
 
-        if (p2_win_bid > p2_budget)
-        {
+    bool p1_wins = (p2_win_bid != 0) && (win_bid_threshold >= lose_bid_threshold);
+    return {p1_wins ? win_bid_threshold : lose_bid_threshold, p1_wins};
+}
 
-            return {p1_win_threshold, true};
-        }
-
-        Coins p2_win_branch_threshold = 0;
-        for (Node neighbor : game.adj_list[node])
-        {
-            p2_win_branch_threshold =
-                std::max(p2_win_branch_threshold, thresholds[neighbor][p2_budget - p2_win_bid]);
-        }
-        Coins p2_win_threshold = (p2_win_branch_threshold == INF_COINS)
-                                     ? INF_COINS
-                                     : p1_bid + p2_win_branch_threshold; // Make function for this
-
-        bool p1_wins = (p2_win_bid != 0) && (p1_win_threshold >= p2_win_threshold);
-        return {p1_wins ? p1_win_threshold : p2_win_threshold, p1_wins};
-    };
-    Coins low = 0;
-    Coins high = max_p1_bid;
+static Coins get_threshold(const Game& game, Node node, Coins p2_budget, Coins win_threshold,
+                           const std::vector<std::vector<Coins>>& thresholds)
+{
+    Coins low = game.tiebreaker == Player::P1 ? 0 : 1;
+    Coins high = game.tiebreaker == Player::P1 ? p2_budget : p2_budget + 1;
     Coins threshold = INF_COINS;
 
     while (low <= high)
     {
         Coins mid = low + ((high - low) / 2);
-
-        auto [current_bid_threshold, p1_wins] = calculate_bid_threshold(mid);
-
-        threshold = std::min(threshold, current_bid_threshold);
-
+        auto [current_threshold, p1_wins] =
+            try_bid(game, node, p2_budget, mid, win_threshold, thresholds);
+        threshold = std::min(threshold, current_threshold);
         if (p1_wins)
         {
             high = mid - 1;
@@ -65,8 +55,79 @@ static Coins compute_configuration_threshold(const Game& game, Node node, Coins 
             low = mid + 1;
         }
     }
-
     return threshold;
+}
+
+static void compute_budget_thresholds(const Game& game, Coins p2_budget,
+                                      const std::vector<std::vector<Node>>& adj_list_transpose,
+                                      std::vector<std::vector<Coins>>& thresholds)
+{
+    int num_nodes = static_cast<int>(game.adj_list.size());
+    Node p1_target = game.p1_target;
+    Node p2_target = game.p2_target;
+
+    std::vector<bool> done(num_nodes);
+    done[p2_target] = true;
+    std::vector<int> not_done_neighbors(num_nodes);
+    for (Node node = 0; node < num_nodes; ++node)
+    {
+        not_done_neighbors[node] = static_cast<int>(game.adj_list[node].size());
+    }
+
+    std::vector<Coins> win_threshold(num_nodes, INF_COINS);
+
+    std::priority_queue<std::pair<Coins, Node>, std::vector<std::pair<Coins, Node>>, std::greater<>>
+        queue;
+
+    queue.emplace(0, p1_target);
+
+    while (!queue.empty())
+    {
+        auto [threshold, node] = queue.top();
+        queue.pop();
+        if (done[node])
+        {
+            continue;
+        }
+        done[node] = true;
+        thresholds[node][p2_budget] = threshold;
+
+        for (Node in_neighbor : adj_list_transpose[node])
+        {
+            if (done[in_neighbor])
+            {
+                continue;
+            }
+            if (win_threshold[in_neighbor] == INF_COINS)
+            {
+                win_threshold[in_neighbor] = threshold;
+                Coins in_neighbor_threshold =
+                    get_threshold(game, in_neighbor, p2_budget, win_threshold[in_neighbor], thresholds);
+                if (in_neighbor_threshold < INF_COINS)
+                {
+                    queue.emplace(in_neighbor_threshold, in_neighbor);
+                }
+            }
+            if (game.tiebreaker == Player::P2 && --not_done_neighbors[in_neighbor] == 0)
+            {
+                queue.emplace(threshold, in_neighbor);
+            }
+        }
+    }
+}
+
+static std::vector<std::vector<Node>> transpose(const Game& game)
+{
+    int num_nodes = static_cast<int>(game.adj_list.size());
+    std::vector<std::vector<Node>> adj_list_transpose(num_nodes);
+    for (Node node_1 = 0; node_1 < num_nodes; ++node_1)
+    {
+        for (Node node_2 : game.adj_list[node_1])
+        {
+            adj_list_transpose[node_2].push_back(node_1);
+        }
+    }
+    return adj_list_transpose;
 }
 
 std::vector<std::vector<Coins>> compute_thresholds(const Game& game, Coins max_p2_budget)
@@ -81,28 +142,14 @@ std::vector<std::vector<Coins>> compute_thresholds(const Game& game, Coins max_p
     {
         thresholds[p1_target][p2_budget] = 0;
         thresholds[p2_target][p2_budget] = INF_COINS;
-        bool changed = true;
-        while (changed)
-        {
-            changed = false;
-            for (Node node = 0; node < num_nodes; ++node)
-            {
-                if (node == p1_target || node == p2_target)
-                {
-                    continue;
-                }
-
-                Coins new_threshold =
-                    compute_configuration_threshold(game, node, p2_budget, thresholds);
-
-                if (new_threshold < thresholds[node][p2_budget])
-                {
-                    thresholds[node][p2_budget] = new_threshold;
-                    changed = true;
-                }
-            }
-        }
     }
+
+    auto adj_list_transpose = transpose(game);
+    for (Coins p2_budget = 0; p2_budget <= max_p2_budget; ++p2_budget)
+    {
+        compute_budget_thresholds(game, p2_budget, adj_list_transpose, thresholds);
+    }
+
     return thresholds;
 }
 
@@ -119,28 +166,26 @@ build_payoff_matrix(const Game& game, Node node, Coins p1_budget, Coins p2_budge
             Coins new_p1_budget = p1_budget - p1_bid;
             Coins new_p2_budget = p2_budget - p2_bid;
 
-            bool p1_wins = (p1_bid > p2_bid) ||
-                           (p1_bid == p2_bid && game.tiebreaker == Player::P1);
+            bool p1_wins = (p1_bid > p2_bid) || (p1_bid == p2_bid && game.tiebreaker == Player::P1);
 
             if (p1_wins)
             {
-                double p1_win_value = 0.0;
+                double win_value = 0.0;
                 for (Node neighbor : game.adj_list[node])
                 {
-                    p1_win_value =
-                        std::max(p1_win_value, values[neighbor][new_p1_budget][new_p2_budget]);
+                    win_value = std::max(win_value, values[neighbor][new_p1_budget][new_p2_budget]);
                 }
-                payoff_matrix[p1_bid][p2_bid] = p1_win_value;
+                payoff_matrix[p1_bid][p2_bid] = win_value;
             }
             else
             {
-                double p2_win_value = 1.0;
+                double lose_value = 1.0;
                 for (Node neighbor : game.adj_list[node])
                 {
-                    p2_win_value =
-                        std::min(p2_win_value, values[neighbor][new_p1_budget][new_p2_budget]);
+                    lose_value =
+                        std::min(lose_value, values[neighbor][new_p1_budget][new_p2_budget]);
                 }
-                payoff_matrix[p1_bid][p2_bid] = p2_win_value;
+                payoff_matrix[p1_bid][p2_bid] = lose_value;
             }
         }
     }
@@ -167,8 +212,8 @@ std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, C
         }
     }
 
-    auto winning_thresholds = compute_thresholds(game, max_p2_budget);
-    auto losing_thresholds = compute_thresholds(game.flipped(), max_p1_budget);
+    auto win_thresholds = compute_thresholds(game, max_p2_budget);
+    auto lose_thresholds = compute_thresholds(game.flipped(), max_p1_budget);
 
     for (Node node = 0; node < num_nodes; ++node)
     {
@@ -180,11 +225,11 @@ std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, C
         {
             for (Coins p2_budget = 0; p2_budget <= max_p2_budget; ++p2_budget)
             {
-                if (p1_budget >= winning_thresholds[node][p2_budget])
+                if (p1_budget >= win_thresholds[node][p2_budget])
                 {
                     values[node][p1_budget][p2_budget] = 1.0;
                 }
-                else if (p2_budget >= losing_thresholds[node][p1_budget])
+                else if (p2_budget >= lose_thresholds[node][p1_budget])
                 {
                     values[node][p1_budget][p2_budget] = 0.0;
                 }
@@ -209,8 +254,8 @@ std::vector<std::vector<std::vector<double>>> compute_values(const Game& game, C
                         continue;
                     }
 
-                    if (p1_budget >= winning_thresholds[node][p2_budget] ||
-                        p2_budget >= losing_thresholds[node][p1_budget])
+                    if (p1_budget >= win_thresholds[node][p2_budget] ||
+                        p2_budget >= lose_thresholds[node][p1_budget])
                     {
                         continue;
                     }

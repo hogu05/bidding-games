@@ -119,21 +119,21 @@ build_payoff_matrix(const Game& game, Node node, Coins p1_budget,
 
             if (p1_wins)
             {
-                double p1_win_value = 0.0;
+                double win_value = 0.0;
                 for (Node neighbor : game.adj_list[node])
                 {
-                    p1_win_value = std::max(p1_win_value, values[neighbor][new_p1_budget]);
+                    win_value = std::max(win_value, values[neighbor][new_p1_budget]);
                 }
-                payoff_matrix[p1_bid][p2_bid] = p1_win_value;
+                payoff_matrix[p1_bid][p2_bid] = win_value;
             }
             else
             {
-                double p2_win_value = 1.0;
+                double lose_value = 1.0;
                 for (Node neighbor : game.adj_list[node])
                 {
-                    p2_win_value = std::min(p2_win_value, values[neighbor][new_p1_budget]);
+                    lose_value = std::min(lose_value, values[neighbor][new_p1_budget]);
                 }
-                payoff_matrix[p1_bid][p2_bid] = p2_win_value;
+                payoff_matrix[p1_bid][p2_bid] = lose_value;
             }
         }
     }
@@ -155,8 +155,8 @@ std::vector<std::vector<double>> compute_values(const Game& game, Coins total_bu
         values[p2_target][p1_budget] = 0.0;
     }
 
-    auto winning_thresholds = compute_thresholds(game, total_budget);
-    auto losing_thresholds = compute_thresholds(game.flipped(), total_budget);
+    auto win_thresholds = compute_thresholds(game, total_budget);
+    auto lose_thresholds = compute_thresholds(game.flipped(), total_budget);
 
     for (Node node = 0; node < num_nodes; ++node)
     {
@@ -166,11 +166,11 @@ std::vector<std::vector<double>> compute_values(const Game& game, Coins total_bu
         }
         for (Coins p1_budget = 0; p1_budget <= total_budget; ++p1_budget)
         {
-            if (p1_budget >= winning_thresholds[node])
+            if (p1_budget >= win_thresholds[node])
             {
                 values[node][p1_budget] = 1.0;
             }
-            else if (total_budget - p1_budget >= losing_thresholds[node])
+            else if (total_budget - p1_budget >= lose_thresholds[node])
             {
                 values[node][p1_budget] = 0.0;
             }
@@ -192,8 +192,8 @@ std::vector<std::vector<double>> compute_values(const Game& game, Coins total_bu
 
             for (Coins p1_budget = 0; p1_budget <= total_budget; ++p1_budget)
             {
-                if (p1_budget >= winning_thresholds[node] ||
-                    total_budget - p1_budget >= losing_thresholds[node])
+                if (p1_budget >= win_thresholds[node] ||
+                    total_budget - p1_budget >= lose_thresholds[node])
                 {
                     continue;
                 }
