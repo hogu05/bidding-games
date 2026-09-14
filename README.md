@@ -118,6 +118,8 @@ The user can choose from the Tug-of-War and the Race games.
 
 Budgets under 25, Tug-of-War length under 10, and Race with the sum of distances under 10 are recommended for a fast response.
 
+The app has been made with the help of AI.
+
 ### Run
 
 From the project root:
