@@ -141,3 +141,7 @@ pytest
 - [Specification](docs/specification.md) (in Czech)
 - [Developer documentation](docs/dev_docs.md)
 - [Analysis](docs/analysis.md)
+
+## Literature
+
+- Avni, G., Meggendorfer, T., Sadhukhan, S., Tkadlec, J., Žikelić, Đ. (2023). _Reachability Poorman Discrete-Bidding Games_. [arXiv:2307.15218](https://arxiv.org/abs/2307.15218)
