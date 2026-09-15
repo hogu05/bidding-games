@@ -1,6 +1,7 @@
 import pytest
 from games import make_tow, make_race
-from allpay import Player, compute_poorman_thresholds
+from allpay import Player
+from checks import assert_poorman_thresholds
 
 BUDGET = 10000
 
@@ -19,6 +20,4 @@ BUDGET = 10000
     ],
 )
 def test_threshold(game, node, expected):
-    thresholds = compute_poorman_thresholds(game, BUDGET)
-    for p2_budget in range(BUDGET + 1):
-        assert thresholds[node][p2_budget] == expected(p2_budget)
+    assert_poorman_thresholds(game, node, expected, BUDGET)

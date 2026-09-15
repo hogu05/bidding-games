@@ -38,4 +38,4 @@ nanobind_add_module(allpay src/bindings.cpp)
 
 target_link_libraries(allpay PRIVATE allpay_lib)
 install(TARGETS allpay LIBRARY DESTINATION .)
-install(FILES python/games.py DESTINATION .)
+install(FILES python/games.py python/checks.py DESTINATION .)

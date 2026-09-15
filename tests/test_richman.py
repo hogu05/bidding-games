@@ -1,6 +1,7 @@
 import pytest
 from games import make_tow, make_race
-from allpay import Player, compute_richman_threshold
+from allpay import Player
+from checks import assert_richman_thresholds
 
 BUDGET = 10000
 
@@ -19,5 +20,4 @@ BUDGET = 10000
     ],
 )
 def test_richman_threshold(game, node, expected):
-    for p2_budget in range(BUDGET + 1):
-        assert compute_richman_threshold(game, node, p2_budget) == expected(p2_budget)
+    assert_richman_thresholds(game, node, expected, BUDGET)

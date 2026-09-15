@@ -9,7 +9,7 @@
 [dependency-groups]
     tests = ["pytest"]
     app = ["dash", "dash-cytoscape"]
-    analysis = ["numpy", "matplotlib", "seaborn"]
+    analysis = ["numpy", "matplotlib", "seaborn", "networkx"]
     all = [
         { include-group = "tests" },
         { include-group = "app" },
