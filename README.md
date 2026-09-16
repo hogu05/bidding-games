@@ -118,7 +118,7 @@ The user can choose from the Tug-of-War and the Race games.
 
 Budgets under 25, Tug-of-War length under 10, and Race with the sum of distances under 10 are recommended for a fast response.
 
-The app has been made with the help of AI.
+The interactive app has been made with the help of AI.
 
 ### Run
 
@@ -126,6 +126,18 @@ From the project root:
 
 ```bash
 python app/main.py
+```
+
+## Analysis
+
+Analysis of the solver's results can be found in the `python/analysis.ipynb` notebook.
+
+### Run
+
+From the project root:
+
+```bash
+jupyter lab python/analysis.ipynb
 ```
 
 ## Tests
@@ -140,7 +152,7 @@ pytest
 
 - [Specification](docs/specification.md) (in Czech)
 - [Developer documentation](docs/dev_docs.md)
-- [Analysis](docs/analysis.md)
+- [Analysis](docs/analysis.pdf)
 
 ## Literature
 
